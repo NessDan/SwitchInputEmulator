@@ -116,6 +116,20 @@ int main(void) {
     // Once that's done, we'll enter an infinite loop.
     for (;;)
     {
+        static uint32_t counter = 1;
+        if (counter == 1) {
+            defaultBuf.Button |= SWITCH_L;
+            defaultBuf.Button |= SWITCH_R;
+            memcpy(&buffer, &defaultBuf, sizeof(USB_JoystickReport_Input_t));
+        }
+        else if (counter == 200000) {
+            defaultBuf.Button = 0;
+            memcpy(&buffer, &defaultBuf, sizeof(USB_JoystickReport_Input_t));
+        }
+        else if (counter == 400000) {
+            counter = 0;
+        }
+        counter++;
         // We need to run our task to process and deliver data for our IN and OUT endpoints.
         HID_Task();
         // We also need to run the main USB management task.
