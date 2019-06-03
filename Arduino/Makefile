@@ -21,7 +21,7 @@ INCLUDE_DIR  = include
 TARGET       = Joystick
 SRC_DIR      = src
 SRC          = $(SRC_DIR)/Joystick.c $(LUFA_SRC_USB)
-LUFA_PATH    = lufa/LUFA
+LUFA_PATH    = ../lufa/LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -Iinclude/
 LD_FLAGS     =
 
