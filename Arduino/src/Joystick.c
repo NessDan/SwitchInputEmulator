@@ -28,12 +28,6 @@ typedef enum {
     OUT_OF_SYNC
 } State_t;
 
-typedef struct {
-    uint8_t input[8];
-    uint8_t crc8_ccitt;
-    uint8_t received_bytes;
-} USB_Input_Packet_t;
-
 USB_Input_Packet_t usbInput;
 USB_JoystickReport_Input_t buffer;
 USB_JoystickReport_Input_t defaultBuf;
@@ -96,32 +90,6 @@ ISR(USART1_RX_vect) {
     }
 }
 
-// Main entry point.
-int main(void) {
-    // We also need to initialize the initial input reports.
-    memset(&defaultBuf, 0, sizeof(USB_JoystickReport_Input_t));
-    defaultBuf.LX = STICK_CENTER;
-    defaultBuf.LY = STICK_CENTER;
-    defaultBuf.RX = STICK_CENTER;
-    defaultBuf.RY = STICK_CENTER;
-    defaultBuf.HAT = HAT_CENTER;
-    memcpy(&buffer, &defaultBuf, sizeof(USB_JoystickReport_Input_t));
-
-    memset(&usbInput, 0, sizeof(USB_Input_Packet_t));
-
-    // We'll start by performing hardware and peripheral setup.
-    SetupHardware();
-    // We'll then enable global interrupts for our use.
-    GlobalInterruptEnable();
-    // Once that's done, we'll enter an infinite loop.
-    for (;;)
-    {
-        // We need to run our task to process and deliver data for our IN and OUT endpoints.
-        HID_Task();
-        // We also need to run the main USB management task.
-        USB_USBTask();
-    }
-}
 
 // Configures hardware and peripherals, such as the USB peripherals.
 void SetupHardware(void) {
@@ -164,7 +132,7 @@ void EVENT_USB_Device_ControlRequest(void) {
 
     // Not used here, it looks like we don't receive control request from the Switch.
 }
-
+int onOff = 0;
 // Process and deliver data from IN and OUT endpoints.
 void HID_Task(void) {
     // If the device isn't connected and properly configured, we can't do anything here.
@@ -205,6 +173,17 @@ void HID_Task(void) {
         disable_rx_isr();
         if (state == SYNCED) {                
             memcpy(&JoystickInputData, &buffer, sizeof(USB_JoystickReport_Input_t));
+
+            // if (onOff < 100000) {
+            //     JoystickInputData.Button |= 0x02;
+            //     onOff = onOff + 1;
+            // } else if (onOff < 200000) {
+            //     JoystickInputData.Button = 0x0;
+            //     onOff = onOff + 1;
+            // } else {
+            //     onOff = 0;
+            // }
+
             send_byte(RESP_USB_ACK);
         } else {
             memcpy(&JoystickInputData, &defaultBuf, sizeof(USB_JoystickReport_Input_t));

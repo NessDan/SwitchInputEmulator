@@ -114,6 +114,12 @@ typedef struct {
     uint8_t  RY;     // Right Stick Y
 } USB_JoystickReport_Output_t;
 
+typedef struct {
+    uint8_t input[8];
+    uint8_t crc8_ccitt;
+    uint8_t received_bytes;
+} USB_Input_Packet_t;
+
 // Function Prototypes
 void USART_Init(int baud);
 void disable_watchdog(void);
@@ -134,5 +140,9 @@ void EVENT_USB_Device_Connect(void);
 void EVENT_USB_Device_Disconnect(void);
 void EVENT_USB_Device_ConfigurationChanged(void);
 void EVENT_USB_Device_ControlRequest(void);
+
+extern USB_JoystickReport_Input_t defaultBuf;
+extern USB_JoystickReport_Input_t buffer;
+extern USB_Input_Packet_t usbInput;
 
 #endif

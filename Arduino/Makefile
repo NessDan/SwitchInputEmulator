@@ -17,21 +17,22 @@ ARCH         = AVR8
 F_CPU        = 16000000
 F_USB        = $(F_CPU)
 OPTIMIZATION = s
-INCLUDE_DIR  = include
+INCLUDE_DIR  = include,src/KeyboardController
 TARGET       = Joystick
 SRC_DIR      = src
-SRC          = $(SRC_DIR)/Joystick.c $(LUFA_SRC_USB)
-LUFA_PATH    = lufa/LUFA
+SRC          = $(SRC_DIR)/Joystick.cpp $(LUFA_SRC_USB)
+LUFA_PATH    = ../lufa/LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -Iinclude/
 LD_FLAGS     =
 
 EMULATOR_TARGET		= emulator
 EMULATOR_CC      	= gcc
-EMULATOR_CC_FLAGS   = -Iinclude/ -DMOCK_AVR
+EMULATOR_CC_FLAGS   = -Iinclude/ -Isrc/KeyboardController/ -DMOCK_AVR
 EMULATOR_OBJ_DIR 	= emulator_obj
-EMULATOR_SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
-EMULATOR_OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(EMULATOR_OBJ_DIR)/%.o,$(EMULATOR_SRC_FILES))
-
+EMULATOR_SRC_FILES  := $(wildcard $(SRC_DIR)/*.cpp)
+EMULATOR_SRC_FILES_C := $(wildcard $(SRC_DIR)/*.c)
+EMULATOR_OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(EMULATOR_OBJ_DIR)/%.o,$(EMULATOR_SRC_FILES))
+EMULATOR_OBJ_FILES_C := $(patsubst $(SRC_DIR)/%.c,$(EMULATOR_OBJ_DIR)/%.o,$(EMULATOR_SRC_FILES_C))
 # Default target
 all: $(EMULATOR_TARGET)
 # Include LUFA build script makefiles
@@ -54,8 +55,12 @@ flash: all
 	sudo dfu-programmer $(MCU) flash $(TARGET).hex
 	sudo dfu-programmer $(MCU) reset
 
-$(EMULATOR_TARGET): $(EMULATOR_OBJ_FILES)
+$(EMULATOR_TARGET): $(EMULATOR_OBJ_FILES) $(EMULATOR_OBJ_FILES_C)
 	$(EMULATOR_CC) -o $@ $^
+
+$(EMULATOR_OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	mkdir -p $(EMULATOR_OBJ_DIR)
+	$(EMULATOR_CC) $(EMULATOR_CC_FLAGS) -c -o $@ $<
 
 $(EMULATOR_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(EMULATOR_OBJ_DIR)
