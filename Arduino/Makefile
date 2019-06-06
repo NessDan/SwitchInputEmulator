@@ -50,8 +50,8 @@ with-alert: all
 with-alert: CC_FLAGS += -DALERT_WHEN_DONE
 
 flash: all
-	sudo dfu-programmer $(MCU) erase
-	sudo dfu-programmer $(MCU) flash $(TARGET).hex
+	sudo dfu-programmer $(MCU) erase --force
+	sudo dfu-programmer $(MCU) flash $(TARGET).hex --suppress-bootloader-mem
 	sudo dfu-programmer $(MCU) reset
 
 $(EMULATOR_TARGET): $(EMULATOR_OBJ_FILES)
