@@ -38,7 +38,7 @@ USB_Input_Packet_t usbInput;
 USB_JoystickReport_Input_t buffer;
 USB_JoystickReport_Input_t defaultBuf;
 State_t state = OUT_OF_SYNC;
-
+bool switchy = true;
 ISR(USART1_RX_vect) {
     uint8_t b = recv_byte();
     if (state == SYNC_START) {
@@ -54,38 +54,12 @@ ISR(USART1_RX_vect) {
         }
         else state = OUT_OF_SYNC;
     } else if (state == SYNCED) {
-
-        if (usbInput.received_bytes < 8) {
-            // Still filling up the buffer
-            usbInput.input[usbInput.received_bytes++] = b;
-            usbInput.crc8_ccitt = _crc8_ccitt_update(usbInput.crc8_ccitt, b);
-
+        send_byte(RESP_SYNC_START);
+        // Everything is ok
+        if (switchy) {
+            switchy = false;
         } else {
-            if (usbInput.crc8_ccitt != b) {
-                if (b == COMMAND_SYNC_START) {
-                    // Start sync
-                    state = SYNC_START;
-                    send_byte(RESP_SYNC_START);
-                } else {
-                    // Mismatched CRC
-                    send_byte(RESP_UPDATE_NACK);
-                    PRINT_DEBUG("Packet specified CRC 0x%02x but calculated CRC was 0x%02x\n", b, usbInput.crc8_ccitt);
-                    PRINT_DEBUG("Packet data: %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", usbInput.input[0], usbInput.input[1], usbInput.input[2], usbInput.input[3], usbInput.input[4], usbInput.input[5], usbInput.input[6], usbInput.input[7], b);
-                }
-                
-            } else {
-                // Everything is ok
-                buffer.Button = (usbInput.input[0] << 8) | usbInput.input[1];
-                buffer.HAT = usbInput.input[2];
-                buffer.LX = usbInput.input[3];
-                buffer.LY = usbInput.input[4];
-                buffer.RX = usbInput.input[5];
-                buffer.RY = usbInput.input[6];
-                buffer.VendorSpec = usbInput.input[7];
-                // send_byte(RESP_UPDATE_ACK);
-            }
-            usbInput.received_bytes = 0;
-            usbInput.crc8_ccitt = 0;
+            switchy = true;
         }
     }
     if (state == OUT_OF_SYNC) {
@@ -116,6 +90,11 @@ int main(void) {
     // Once that's done, we'll enter an infinite loop.
     for (;;)
     {
+        if (switchy) {
+            buffer.Button = (SWITCH_L | SWITCH_R);
+        } else {
+            buffer.Button = 0x00;
+        }
         // We need to run our task to process and deliver data for our IN and OUT endpoints.
         HID_Task();
         // We also need to run the main USB management task.
