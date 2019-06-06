@@ -91,10 +91,11 @@ int main(void) {
     for (;;)
     {
         if (switchy) {
-            buffer.Button = (SWITCH_L | SWITCH_R);
+            defaultBuf.Button = (SWITCH_L | SWITCH_R);
         } else {
-            buffer.Button = 0x00;
+            defaultBuf.Button = 0x00;
         }
+        memcpy(&buffer, &defaultBuf, sizeof(USB_JoystickReport_Input_t));
         // We need to run our task to process and deliver data for our IN and OUT endpoints.
         HID_Task();
         // We also need to run the main USB management task.
